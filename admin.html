@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - Grocery Store</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="index.html">Grocery Store</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
+                    <li class="nav-item"><a class="nav-link" href="products.html">Products</a></li>
+                    <li class="nav-item"><a class="nav-link" href="cart.html">Cart</a></li>
+                    <li class="nav-item"><a class="nav-link active" href="admin.html">Admin Panel</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Admin Dashboard -->
+    <div class="container mt-4">
+        <h2 class="text-center">Admin Panel</h2>
+        <div class="row">
+            <div class="col-md-4">
+                <button class="btn btn-primary w-100 my-2" onclick="showSection('products')">Manage Products</button>
+                <button class="btn btn-primary w-100 my-2" onclick="showSection('orders')">View Orders</button>
+                <button class="btn btn-primary w-100 my-2" onclick="showSection('users')">Manage Users</button>
+            </div>
+            <div class="col-md-8">
+                <div id="admin-section">
+                    <h4>Select an option to manage</h4>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script>
+        let products = JSON.parse(localStorage.getItem("products")) || [];
+        let orders = JSON.parse(localStorage.getItem("orders")) || [];
+        let users = JSON.parse(localStorage.getItem("users")) || [];
+
+        function showSection(section) {
+            let content = document.getElementById("admin-section");
+
+            if (section === "products") {
+                content.innerHTML = `
+                    <h4>Manage Products</h4>
+                    <form onsubmit="addProduct(event)">
+                        <label>Product Name:</label>
+                        <input type="text" id="product-name" class="form-control mb-2" required>
+                        <label>Price:</label>
+                        <input type="number" id="product-price" class="form-control mb-2" required>
+                        <label>Image URL:</label>
+                        <input type="text" id="product-image" class="form-control mb-2" required>
+                        <label>Description:</label>
+                        <textarea id="product-description" class="form-control mb-2"></textarea>
+                        <button type="submit" class="btn btn-success">Add Product</button>
+                    </form>
+                    <h5 class="mt-4">Product List</h5>
+                    <ul id="product-list" class="list-group mt-2"></ul>
+                `;
+                displayProducts();
+            } else if (section === "orders") {
+                content.innerHTML = `<h4>View Orders</h4><ul id="order-list" class="list-group mt-2"></ul>`;
+                displayOrders();
+            } else if (section === "users") {
+                content.innerHTML = `
+                    <h4>Manage Users</h4>
+                    <form onsubmit="addUser(event)">
+                        <label>Username:</label>
+                        <input type="text" id="username" class="form-control mb-2" required>
+                        <label>Email:</label>
+                        <input type="email" id="email" class="form-control mb-2" required>
+                        <button type="submit" class="btn btn-success">Add User</button>
+                    </form>
+                    <h5 class="mt-4">User List</h5>
+                    <ul id="user-list" class="list-group mt-2"></ul>
+                `;
+                displayUsers();
+            }
+        }
+
+        // Add new product
+        function addProduct(event) {
+            event.preventDefault();
+            let name = document.getElementById("product-name").value;
+            let price = document.getElementById("product-price").value;
+            let img = document.getElementById("product-image").value;
+            let description = document.getElementById("product-description").value;
+
+            let newProduct = { name, price, img, description };
+            products.push(newProduct);
+            localStorage.setItem("products", JSON.stringify(products));
+            displayProducts();
+        }
+
+        // Display products
+        function displayProducts() {
+            let productList = document.getElementById("product-list");
+            productList.innerHTML = "";
+            products.forEach((product, index) => {
+                productList.innerHTML += `
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <img src="${product.img}" width="50" class="me-2">
+                        ${product.name} - $${product.price}
+                        <button class="btn btn-danger btn-sm" onclick="removeProduct(${index})">Remove</button>
+                    </li>
+                `;
+            });
+        }
+
+        // Remove product
+        function removeProduct(index) {
+            products.splice(index, 1);
+            localStorage.setItem("products", JSON.stringify(products));
+            displayProducts();
+        }
+
+        // Place a new order
+        function placeOrder(items) {
+            let total = items.reduce((sum, item) => sum + item.price, 0);
+            let newOrder = { items, total };
+
+            // Add the order to the orders array and save it in localStorage
+            orders.push(newOrder);
+            localStorage.setItem("orders", JSON.stringify(orders));
+
+            // Display orders after placing a new one
+            displayOrders();
+        }
+
+        // Display orders
+        function displayOrders() {
+            let orderList = document.getElementById("order-list");
+            orderList.innerHTML = "";
+
+            if (orders.length === 0) {
+                orderList.innerHTML = "<li class='list-group-item'>No orders yet!</li>";
+            } else {
+                orders.forEach((order, index) => {
+                    orderList.innerHTML += `
+                        <li class="list-group-item">
+                            Order #${index + 1}: ${order.items.length} items - Total: $${order.total.toFixed(2)}
+                        </li>
+                    `;
+                });
+            }
+        }
+
+        // Add new user
+        function addUser(event) {
+            event.preventDefault();
+            let username = document.getElementById("username").value;
+            let email = document.getElementById("email").value;
+
+            let newUser = { username, email };
+            users.push(newUser);
+            localStorage.setItem("users", JSON.stringify(users));
+            displayUsers();
+        }
+
+        // Display users
+        function displayUsers() {
+            let userList = document.getElementById("user-list");
+            userList.innerHTML = "";
+
+            if (users.length === 0) {
+                userList.innerHTML = "<li class='list-group-item'>No users yet!</li>";
+            } else {
+                users.forEach((user, index) => {
+                    userList.innerHTML += `
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            ${user.username} - ${user.email}
+                        </li>
+                    `;
+                });
+            }
+        }
+
+        // Load initial data
+        function loadProducts() {
+            if (!products || products.length === 0) {
+                generateSampleProducts();
+            } else {
+                displayProducts();
+            }
+        }
+
+        function generateSampleProducts() {
+            let sampleProducts = [];
+            for (let i = 1; i <= 100; i++) {
+                let product = {
+                    name: `Product ${i}`,
+                    price: (Math.random() * (100 - 10) + 10).toFixed(2),
+                    img: `https://via.placeholder.com/50x50?text=Product+${i}`,
+                    description: `This is a description for Product ${i}. It's a great product.`
+                };
+                sampleProducts.push(product);
+            }
+            localStorage.setItem("products", JSON.stringify(sampleProducts));
+            products = sampleProducts;
+            displayProducts();
+        }
+
+        // Initialize
+        loadProducts();
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>
